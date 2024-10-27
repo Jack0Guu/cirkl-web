@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cirkl AI - Iris</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #f4f7f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #chatContainer {
+      display: flex;
+      flex-direction: column;
+      width: 90%;
+      max-width: 400px;
+      height: 500px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    #messages {
+      flex-grow: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: #fafafa;
+      scrollbar-width: thin;
+      scrollbar-color: #ccc transparent;
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 16px;
+      max-width: 75%;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    .message-user {
+      background-color: #b056f5;
+      color: white;
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+      margin-left: auto;
+      max-width: 50%;
+    }
+    .message-bot {
+      background-color: #f8e8ff;
+      color: #333;
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+      max-width: 50%;
+    }
+    #inputContainer {
+      display: flex;
+      padding: 15px;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+    #userInput {
+      flex-grow: 1;
+      padding: 12px 15px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    #userInput:focus {
+      border-color: #007bff;
+    }
+    #sendMessageButton {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 10%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #HomeButton {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 14.75px 10px;
+      margin-left: 10px;
+      border-radius: 10%;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #beta-name {
+        text-align: center;
+        margin-bottom: 10px; 
+    }
+
+    #sendMessageButton:hover {
+      background-color: #0056b3;
+    }
+    #sendMessageButton:active {
+      transform: scale(0.95);
+    }
+    /* Loading animation */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .dot {
+      height: 8px;
+      width: 8px;
+      margin: 0 3px;
+      background-color: #007bff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: blink 1s infinite both;
+    }
+    .dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes blink {
+      0%, 100% {
+        opacity: 0.2;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+    <div id="chatContainer">
+      <div class="feedback-block">
+        <h3 id="beta-name">This service is in Beta. <a href="https://ai.cirkl.uk/iris/cirkl/feedback">Feedback</a></h3>
+      </div> 
+    <div id="messages"></div>
+    <div id="inputContainer">
+        <input type="text" id="userInput" placeholder="Type your message">
+        <a href="https://ai.cirkl.uk/">
+            <button id="HomeButton">Back</button>
+        </a>
+        <button id="sendMessageButton">&#10148;</button>
+    </div>
+    </div>
+
+  <script>
+    const botResponses = {
+  // Greetings
+  "hello": "Hello! How can I help you today?",
+  "hi": "Hi there! What can I assist you with?",
+  "hey": "Hey! What would you like to know?",
+  "good morning": "Good morning! How's your day going?",
+  "good afternoon": "Good afternoon! Need any help?",
+  "good evening": "Good evening! How can I assist you?",
+  
+  // Gratitude
+  "thank you": "You're welcome! Let me know if you need anything else.",
+  "thanks": "No problem! Anything else?",
+  "thanks a lot": "Glad I could help! Anything else on your mind?",
+  "i appreciate it": "You're welcome! I'm here if you need more help.",
+  
+  // Asking how the bot is
+  "how are you?": "I don't really have feelings, since I'm a machine learning model, but everything seems to be going ok.",
+  "how's it going?": "Everything's good! How can I assist you?",
+  "what's up?": "The sky ;)",
+  
+  // Asking about the bot
+  "what's your name?": "I'm Iris, Cirkl's friendly ChatBot!",
+  "who are you?": "I'm Iris, here to help you with whatever you need!",
+  "what do you do?": "I assist users like you with questions and provide information.",
+  "what are you?": "I'm a machine learning model, made to help you out.",
+  "are you an ai?": "Technically, yes. I'm more a machine learning model though.",
+  
+  // Basic inquiries
+  "how does this work?": "Just type in your questions, and I’ll do my best to answer!",
+  "what can you do?": "I can help you with general information or answer specific questions about Cirkl and navigating our site.",
+  "can you help me?": "Of course! What do you need help with?",
+  
+  // Small talk
+  "how's the weather?": "I'm sorry, but I can't check the weather! You'll need to join ClimaCast's weather channel for that!",
+  "what's your favorite color?": "I may come as no surprise, but I love purple; I've been programmed with Cirkl Purple embedded in my code.",
+  
+  // Farewell
+  "goodbye": "Goodbye! Feel free to come back anytime.",
+  "bye": "See you later! Have a great day.",
+  "see you": "Take care! I’ll be here when you need me.",
+  
+  // Help & Support
+  "help": "Sure! What do you need help with?",
+  "support": "I'm here to support you! What do you need?",
+  "i need assistance": "I’m here to assist you. Tell me what you need help with.",
+  
+  // Website-specific inquiries
+  "what is cirkl?": "Cirkl is a platform designed to make tasks easier. How can I help you explore it?",
+  "how do i get to the homepage?": "You can go home by clicking Home on this page.",
+  "how do i get to ClimaCast?": "You can go to ClimaCast by clicking Home on this page then clicking ClimaCast.",
+  "how do i get to the channel?": "You can get to our Channel on WhatsApp by clicking 'Home,' then 'ClimaCast,' then 'Channel.'",
+  
+  // Problem solving
+  "i have a problem": "I’m sorry to hear that. Can you explain the problem?",
+  "something is wrong": "Let me help you fix it. What seems to be the issue?",
+  
+  // Random questions
+  "what day is it?": "It's [Today’s Date]! Anything else you'd like to know?",
+  "what time is it?": "It’s the perfect time to learn something new!",
+
+  // Encouragement
+  "i'm stuck": "Don’t worry! Let’s tackle this together. What's the issue?",
+  "i don't understand": "No problem! I'll try to explain it differently.",
+  
+  // Default fallback response
+  "default": "Sorry, I didn’t understand that. Could you try asking in a different way?",
+
+  // Programmed commands
+  "help": "If you want to navigate Cirkl, you can say the page that you want to go, for instance, 'homepage' or 'ClimaCast'. All enquiries can be forwarded to 'cirkl.uk@gmail.com'.",
+
+  // Easter eggs
+  "poop": "Leo, I know you're there.",
+  "el primo": "Stanley, I know you're there, and we both know that he's the best.",
+
+  // Swear handling
+  "shit": "I know it's frustrating, but try to keep it respectful.",
+  "fuck": "I know it's frustrating, but try to keep it respectful.",
+  "penis": "That's inappropriate.",
+
+  // Settings
+  "version": "You are on version 1.0beta. (1.0beta-1c)",
+    };
+
+    // Fuzzy matching function using Levenshtein distance
+    function levenshtein(a, b) {
+      const matrix = [];
+      let i, j;
+
+      for (i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+      }
+
+      for (j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+      }
+
+      for (i = 1; i <= b.length; i++) {
+        for (j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+          }
+        }
+      }
+
+      return matrix[b.length][a.length];
+    }
+
+    // Function to find the closest match based on Levenshtein distance
+    function findClosestResponse(input) {
+      let closestMatch = "default";
+      let closestDistance = Infinity;
+
+      for (let key in botResponses) {
+        const distance = levenshtein(input, key);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestMatch = key;
+        }
+      }
+
+      return botResponses[closestMatch];
+    }
+
+    // Function to display a bot message
+    function displayBotMessage(message) {
+      const messages = document.getElementById("messages");
+      const botMessage = document.createElement("div");
+      botMessage.classList.add("message", "message-bot");
+      botMessage.textContent = message;
+      messages.appendChild(botMessage);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Display a welcome message when the page loads
+    window.onload = function() {
+      displayBotMessage("Hi, I'm Iris, Cirkl's AI Assistant. I've been added to make sure you know how to get around. What can I assist you with?");
+    };
+
+    // Event listeners for sending messages
+    document.getElementById('sendMessageButton').addEventListener('click', sendMessage);
+    document.getElementById('userInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    function sendMessage() {
+      const input = document.getElementById("userInput").value.trim().toLowerCase();
+      const messages = document.getElementById("messages");
+
+      if (input) {
+        // Display user message
+        const userMessage = document.createElement("div");
+        userMessage.classList.add("message", "message-user");
+        userMessage.textContent = input;
+        messages.appendChild(userMessage);
+
+        // Add loading animation
+        const loadingMessage = document.createElement("div");
+        loadingMessage.classList.add("message", "message-bot", "loading");
+        loadingMessage.innerHTML = `
+          <div class="loading-animation">
+            <div class="dot dot1"></div>
+            <div class="dot dot2"></div>
+            <div class="dot dot3"></div>
+          </div>`;
+        messages.appendChild(loadingMessage);
+        messages.scrollTop = messages.scrollHeight;
+
+        // Clear input field
+        document.getElementById("userInput").value = "";
+
+        // Get response after delay
+        setTimeout(() => {
+          messages.removeChild(loadingMessage);
+          const botResponse = findClosestResponse(input);
+          const botMessage = document.createElement("div");
+          botMessage.classList.add("message", "message-bot");
+          botMessage.textContent = botResponse;
+          messages.appendChild(botMessage);
+          messages.scrollTop = messages.scrollHeight;
+        }, 1000);
+      }
+    }
+  </script>
+</body>
+</html>
